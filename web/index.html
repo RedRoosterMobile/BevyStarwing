@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Starwing</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #05010e; color: #eef; font: 16px system-ui, sans-serif; text-align: center; }
+    h1 { margin: 16px 0 8px; letter-spacing: .15em; }
+    #screen { position: relative; width: min(960px, 100vw, calc((100dvh - 140px) * 4 / 3)); aspect-ratio: 4 / 3; margin: auto; }
+    canvas { display: block; width: 100%; height: 100%; outline: none; }
+    #cover { position: absolute; inset: 0; display: grid; place-content: center; background: #120527; padding: 24px; }
+    button { padding: 14px 28px; font: inherit; cursor: pointer; color: white; background: #7424b5; border: 1px solid #f3a; border-radius: 6px; }
+    button:disabled { cursor: wait; opacity: .6; }
+    #status { max-width: 600px; overflow-wrap: anywhere; }
+    footer { padding: 12px; font-size: 14px; color: #bab0d4; }
+  </style>
+</head>
+<body>
+  <h1>STARWING</h1>
+  <div id="screen">
+    <canvas id="game" tabindex="0" aria-label="Starwing game. Use WASD or arrow keys to steer and Space to shoot."></canvas>
+    <div id="cover">
+      <button id="start" disabled>Loading…</button>
+      <p id="status" role="status">Downloading the game. A keyboard and WebGL2 are required.</p>
+    </div>
+  </div>
+  <footer>WASD / arrows: steer · Space: fire · Shift: barrel roll · P: pause · R: restart<br>Click the game to focus. Sound may require a click after loading.</footer>
+  <script type="module">
+    import init from './starwing.js';
+    const button = document.querySelector('#start');
+    const status = document.querySelector('#status');
+    const canvas = document.querySelector('#game');
+    let wasm;
+    try {
+      const response = await fetch(new URL('./starwing_bg.wasm', import.meta.url));
+      if (!response.ok) throw new Error(`Game download failed (${response.status})`);
+      // Bytes also work on FTP hosts that don't serve the application/wasm MIME type.
+      wasm = await WebAssembly.compile(await response.arrayBuffer());
+      button.disabled = false;
+      button.textContent = 'Play Starwing';
+      status.textContent = 'Ready. Click Play to start.';
+    } catch (error) {
+      button.textContent = 'Unable to load';
+      status.textContent = `${error.message}. Reload to retry.`;
+    }
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      button.textContent = 'Starting…';
+      status.textContent = 'Preparing graphics and soundtrack…';
+      try {
+        await init({ module_or_path: wasm });
+        document.querySelector('#cover').remove();
+        canvas.focus();
+      } catch (error) {
+        status.textContent = `${error.message}. Check WebGL2 support and reload to retry.`;
+      }
+    });
+    canvas.addEventListener('pointerdown', () => canvas.focus());
+  </script>
+</body>
+</html>

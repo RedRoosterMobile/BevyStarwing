@@ -1,0 +1,27 @@
+[package]
+name = "starwing"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.18.1", default-features = false, features = ["default_app", "default_platform", "3d_bevy_render", "ui_bevy_render", "bevy_audio", "wav"] }
+
+xmrs = { version = "0.15.2", default-features = false, features = ["std", "import_mod"] }
+xmrsplayer = { version = "0.15.0", default-features = false, features = ["std", "import_mod"] }
+
+[features]
+web = ["bevy/webgl2"]
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.web-release]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = "debuginfo"
+

@@ -1,0 +1,16 @@
+# Rust build output (keep Cargo.lock: this is an application).
+/target/
+
+# Generated web build, upload archive, and extracted archive.
+/dist/
+/starwing-web.zip
+/starwing-web/
+
+# macOS metadata and editor temporary files.
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+*.rs.bk
+
