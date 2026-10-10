@@ -144,6 +144,11 @@ pub fn setup(
             Transform::from_xyz(0.0, 0.0, 14.0 - row as f32 * TILE),
         ));
     }
+    // Keep the backdrop crisp while terrain fades into the horizon haze.
+    let sky_ink = materials.add(StandardMaterial {
+        fog_enabled: false,
+        ..materials.get(&ink).unwrap().clone()
+    });
     let mut sky = PaintedMesh::default();
     let stops = [
         (-180.0, Color::srgb(0.055, 0.008, 0.12)),
@@ -188,11 +193,11 @@ pub fn setup(
     }
     commands.spawn((
         Mesh3d(meshes.add(sky.finish())),
-        MeshMaterial3d(ink.clone()),
+        MeshMaterial3d(sky_ink.clone()),
     ));
     commands.spawn((
         Mesh3d(meshes.add(sunset())),
-        MeshMaterial3d(ink),
+        MeshMaterial3d(sky_ink),
         Transform::from_xyz(0.0, 27.0, -230.0),
     ));
 }

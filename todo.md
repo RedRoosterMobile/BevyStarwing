@@ -28,8 +28,7 @@ https://bevy.org/examples/shaders/custom-post-processing/
 
 when. closing the app after death I have to force quit/kill it
 
-
-## character
+## OK character
 
 go to blender, build a humanized face/head of an animal (A Panther?). let it have the following expressions (via shape keys or rigging)
 
@@ -47,3 +46,23 @@ also give me voice lines that I will record and put in.
 render it in a monitor with crt lines on top and make it react to what happens in the game.
 
 also give me voice lines that I will record and put in.
+
+## OK fog
+
+can you add athospheric fog like in this example?
+https://bevy.org/examples/3d-rendering/atmospheric-fog/
+
+
+## OK bloom for the bullets
+
+
+add bloom to the bullets so you can see them better. 
+
+pink for enemy bullets
+blue for player bullets
+
+also the bullets are a bit too blocky.
+
+bloom example:
+
+https://bevy.org/examples/3d-rendering/bloom-3d/

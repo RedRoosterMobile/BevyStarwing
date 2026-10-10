@@ -1,4 +1,11 @@
-use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
+use bevy::{
+    camera::Hdr,
+    core_pipeline::tonemapping::Tonemapping,
+    post_process::bloom::{Bloom, BloomCompositeMode, BloomPrefilter},
+    prelude::*,
+    render::render_resource::PrimitiveTopology,
+    ui_widgets::{Activate, Button},
+};
 use std::f32::consts::TAU;
 
 mod explosion;
@@ -122,6 +129,10 @@ struct Scenery;
 #[derive(Component)]
 struct Hud;
 #[derive(Component)]
+struct FogButton;
+#[derive(Component)]
+struct FogLabel;
+#[derive(Component)]
 struct Enemy {
     home: Vec2,
     phase: f32,
@@ -146,6 +157,7 @@ struct Spark {
 #[derive(Resource)]
 struct Art {
     cube: Handle<Mesh>,
+    bolt: Handle<Mesh>,
     ship: Handle<Mesh>,
     rock: Handle<Mesh>,
     hull: Handle<StandardMaterial>,
@@ -200,14 +212,23 @@ fn setup(
     };
     let art = Art {
         cube: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+        bolt: meshes.add(Sphere::new(0.5).mesh().uv(16, 12)),
         ship: meshes.add(ship_mesh()),
         rock: meshes.add(Sphere::new(1.0).mesh().ico(0).unwrap()),
         hull: material(Color::srgb(0.72, 0.82, 0.9)),
         blue: material(Color::srgb(0.04, 0.8, 1.0)),
         red: material(Color::srgb(1.0, 0.06, 0.32)),
         stone: material(Color::srgb(0.34, 0.045, 0.42)),
-        laser: material(Color::srgb(0.05, 1.0, 0.9)),
-        hostile_laser: material(Color::srgb(1.0, 0.3, 0.08)),
+        laser: mats.add(StandardMaterial {
+            base_color: Color::srgb(0.08, 0.35, 1.0),
+            emissive: LinearRgba::rgb(0.2, 2.0, 12.0),
+            ..default()
+        }),
+        hostile_laser: mats.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 0.08, 0.45),
+            emissive: LinearRgba::rgb(12.0, 0.2, 3.5),
+            ..default()
+        }),
     };
     commands
         .spawn((
@@ -235,6 +256,27 @@ fn setup(
         Transform::from_xyz(0.0, 3.0, 12.0).looking_at(Vec3::new(0.0, 0.0, -28.0), Vec3::Y);
     commands.spawn((
         Camera3d::default(),
+        Hdr,
+        Tonemapping::Reinhard,
+        Bloom {
+            intensity: 0.2,
+            prefilter: BloomPrefilter {
+                threshold: 1.0,
+                threshold_softness: 0.2,
+            },
+            composite_mode: BloomCompositeMode::Additive,
+            ..Bloom::NATURAL
+        },
+        DistanceFog {
+            color: Color::srgb(0.3, 0.025, 0.22),
+            directional_light_color: Color::srgba(1.0, 0.45, 0.3, 0.25),
+            directional_light_exponent: 30.0,
+            falloff: FogFalloff::from_visibility_colors(
+                180.0,
+                Color::srgb(0.35, 0.5, 0.66),
+                Color::srgb(0.8, 0.844, 1.0),
+            ),
+        },
         IsDefaultUiCamera,
         camera_pose,
         impact::ImpactCamera::new(camera_pose),
@@ -282,8 +324,47 @@ fn setup(
             ..default()
         },
     ));
+    commands
+        .spawn((
+            Button,
+            FogButton,
+            Node {
+                position_type: PositionType::Absolute,
+                top: px(18),
+                right: px(22),
+                padding: UiRect::axes(px(12), px(8)),
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.12, 0.015, 0.22)),
+        ))
+        .observe(toggle_fog)
+        .with_children(|parent| {
+            parent.spawn((
+                FogLabel,
+                Text::new("Fog: ON"),
+                TextFont {
+                    font_size: FontSize::Px(16.0),
+                    ..default()
+                },
+                TextColor(Color::srgb(0.25, 1.0, 0.95)),
+            ));
+        });
     commands.insert_resource(explosion::setup(&mut meshes, &mut mats));
     commands.insert_resource(art);
+}
+
+fn toggle_fog(
+    _activate: On<Activate>,
+    mut fog: Query<&mut DistanceFog>,
+    mut labels: Query<&mut Text, With<FogLabel>>,
+) {
+    for mut fog in &mut fog {
+        let enabled = fog.color.alpha() == 0.0;
+        fog.color.set_alpha(if enabled { 1.0 } else { 0.0 });
+        for mut label in &mut labels {
+            label.0 = if enabled { "Fog: ON" } else { "Fog: OFF" }.into();
+        }
+    }
 }
 
 fn controls(
@@ -417,7 +498,7 @@ fn spawn_bolt(commands: &mut Commands, art: &Art, position: Vec3, velocity: Vec3
             previous: position,
             friendly,
         },
-        Mesh3d(art.cube.clone()),
+        Mesh3d(art.bolt.clone()),
         MeshMaterial3d(if friendly {
             art.laser.clone()
         } else {
@@ -650,7 +731,7 @@ fn combat(
     mut flight: ResMut<Flight>,
     art: Res<Art>,
     explosion_art: Res<explosion::ExplosionArt>,
-    player: Query<&Transform, With<Player>>,
+    mut player: Query<(&Transform, &mut Visibility), With<Player>>,
     enemies: Query<(Entity, &Transform), With<Enemy>>,
     obstacles: Query<(Entity, &Transform, &Obstacle)>,
     bolts: Query<(Entity, &Transform, &Bolt)>,
@@ -659,7 +740,7 @@ fn combat(
     if !flight.running() {
         return;
     }
-    let Ok(player) = player.single() else {
+    let Ok((player, mut visibility)) = player.single_mut() else {
         return;
     };
     let mut destroyed = Vec::new();
@@ -717,6 +798,15 @@ fn combat(
                     Sound::Hit
                 });
                 burst(&mut commands, &art, &mut flight, player.translation);
+                if flight.ended {
+                    explosion::spawn(
+                        &mut commands,
+                        &explosion_art,
+                        &mut flight,
+                        player.translation,
+                    );
+                    *visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -738,6 +828,15 @@ fn combat(
             Sound::Hit
         });
         burst(&mut commands, &art, &mut flight, player.translation);
+        if flight.ended {
+            explosion::spawn(
+                &mut commands,
+                &explosion_art,
+                &mut flight,
+                player.translation,
+            );
+            *visibility = Visibility::Hidden;
+        }
     }
 }
 
@@ -845,6 +944,36 @@ mod tests {
             .press(KeyCode::KeyR);
         app.world_mut().run_system_once(controls).unwrap();
         assert_eq!(app.world().resource::<Flight>().steering, Quat::IDENTITY);
+    }
+
+    #[test]
+    fn fog_button_toggles_once_per_activation_even_while_paused() {
+        let mut app = test_app();
+        app.world_mut().resource_mut::<Flight>().paused = true;
+        let button = app
+            .world_mut()
+            .query_filtered::<Entity, With<FogButton>>()
+            .single(app.world())
+            .unwrap();
+        for enabled in [false, true] {
+            app.world_mut().trigger(Activate { entity: button });
+            app.update();
+            for _ in 0..2 {
+                let fog = app
+                    .world_mut()
+                    .query::<&DistanceFog>()
+                    .single(app.world())
+                    .unwrap();
+                assert_eq!(fog.color.alpha(), if enabled { 1.0 } else { 0.0 });
+                let label = app
+                    .world_mut()
+                    .query_filtered::<&Text, With<FogLabel>>()
+                    .single(app.world())
+                    .unwrap();
+                assert_eq!(label.0, if enabled { "Fog: ON" } else { "Fog: OFF" });
+                app.update();
+            }
+        }
     }
 
     #[test]
@@ -1093,6 +1222,61 @@ mod tests {
             .unwrap();
         assert_eq!(*pose, camera.base);
         assert_eq!(aberration.intensity, impact::CHROMATIC_BASELINE);
+    }
+
+    #[test]
+    fn player_death_explodes_at_ship_position_and_restart_restores_it() {
+        use bevy::ecs::system::RunSystemOnce;
+        for crash in [false, true] {
+            let mut app = test_app();
+            let position = Vec3::new(2.0, 1.0, 0.0);
+            let player = app
+                .world_mut()
+                .query_filtered::<Entity, With<Player>>()
+                .single(app.world())
+                .unwrap();
+            app.world_mut()
+                .get_mut::<Transform>(player)
+                .unwrap()
+                .translation = position;
+            app.world_mut().resource_mut::<Flight>().health = 1;
+            if crash {
+                app.world_mut().spawn((
+                    Obstacle { half: Vec3::ONE },
+                    Transform::from_translation(position),
+                ));
+            } else {
+                app.world_mut().spawn((
+                    Bolt {
+                        velocity: Vec3::Z * 38.0,
+                        previous: position - Vec3::Z * 2.0,
+                        friendly: false,
+                    },
+                    Transform::from_translation(position + Vec3::Z * 2.0),
+                ));
+            }
+            app.world_mut().run_system_once(combat).unwrap();
+            assert_eq!(app.world().resource::<Flight>().health, 0);
+            assert_eq!(
+                app.world().get::<Visibility>(player),
+                Some(&Visibility::Hidden)
+            );
+            let world = app.world_mut();
+            let mut particles = world.query_filtered::<&Transform, With<explosion::Particle>>();
+            assert_eq!(particles.iter(world).count(), 72);
+            assert!(particles.iter(world).all(|t| t.translation == position));
+            world.run_system_once(combat).unwrap();
+            assert_eq!(particles.iter(world).count(), 72);
+            world
+                .resource_mut::<ButtonInput<KeyCode>>()
+                .press(KeyCode::KeyR);
+            world.run_system_once(controls).unwrap();
+            assert_eq!(particles.iter(world).count(), 0);
+            assert_eq!(
+                world.get::<Visibility>(player),
+                Some(&Visibility::Inherited)
+            );
+        }
     }
 
     #[test]

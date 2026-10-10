@@ -10,6 +10,7 @@ pub struct ExplosionArt {
     ring: Handle<Mesh>,
     flash: Handle<StandardMaterial>,
     fire: Handle<StandardMaterial>,
+    ring_glow: Handle<StandardMaterial>,
     debris: Handle<StandardMaterial>,
     smoke: Handle<StandardMaterial>,
 }
@@ -31,12 +32,17 @@ pub fn setup(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>
         ring: meshes.add(Torus::new(0.95, 1.05)),
         flash,
         fire,
+        ring_glow: materials.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 0.32, 0.025),
+            emissive: LinearRgba::rgb(12.0, 2.0, 0.1),
+            ..default()
+        }),
         debris: materials.add(StandardMaterial {
             base_color: Color::srgb(0.35, 0.12, 0.08),
             ..default()
         }),
         smoke: materials.add(StandardMaterial {
-            base_color: Color::srgba(0.12, 0.065, 0.16, 0.35),
+            base_color: Color::srgba(1.0, 1.0, 1.0, 0.18),
             alpha_mode: AlphaMode::Blend,
             unlit: true,
             ..default()
@@ -66,7 +72,7 @@ pub(crate) struct Particle {
 pub fn spawn(commands: &mut Commands, art: &ExplosionArt, flight: &mut Flight, position: Vec3) {
     for (kind, count, mesh, material) in [
         (Kind::Flash, 1, &art.sphere, &art.flash),
-        (Kind::Ring, 1, &art.ring, &art.fire),
+        (Kind::Ring, 1, &art.ring, &art.ring_glow),
         (Kind::Spark, 36, &art.streak, &art.fire),
         (Kind::Debris, 16, &art.chunk, &art.debris),
         (Kind::Smoke, 18, &art.sphere, &art.smoke),
