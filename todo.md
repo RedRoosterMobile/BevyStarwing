@@ -66,3 +66,10 @@ also the bullets are a bit too blocky.
 bloom example:
 
 https://bevy.org/examples/3d-rendering/bloom-3d/
+
+
+## game features
+
+the enemies all look the same. add some variation.
+
+the obstacles appear
