@@ -252,7 +252,7 @@ fn setup(
         Hud,
         Text::new(""),
         TextFont {
-            font_size: 22.0,
+            font_size: FontSize::Px(22.0),
             ..default()
         },
         TextColor(Color::srgb(0.25, 1.0, 0.95)),
@@ -264,7 +264,7 @@ fn setup(
         },
     ));
     commands.spawn((Text::new("WASD / arrows: steer    SPACE: fire    SHIFT: roll\nP: pause    R: restart    ESC: quit"),
-        TextFont { font_size: 17.0, ..default() }, TextColor(Color::WHITE), Node {
+        TextFont { font_size: FontSize::Px(17.0), ..default() }, TextColor(Color::WHITE), Node {
             position_type: PositionType::Absolute, bottom: px(18), left: px(22), ..default()
         }));
     commands.insert_resource(explosion::setup(&mut meshes, &mut mats));
@@ -391,7 +391,7 @@ fn animate_steering(current: Quat, direction: Vec2, dt: f32) -> Quat {
         -direction.x * 0.12,
         -direction.x * 0.35,
     );
-    current.slerp(target, 1.0 - (-10.0 * dt).exp())
+    current.slerp(target, 1.0 - (-10.0 * dt).exp()).normalize()
 }
 
 fn spawn_bolt(commands: &mut Commands, art: &Art, position: Vec3, velocity: Vec3, friendly: bool) {

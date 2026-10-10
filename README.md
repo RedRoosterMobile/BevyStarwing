@@ -1,6 +1,6 @@
 # Starwing
 
-A tiny Star Fox (SNES)-inspired rail shooter, made with Bevy 0.18.1 and original procedural geometry. No Nintendo assets, external models, or textures.
+A tiny Star Fox (SNES)-inspired rail shooter, made with Bevy 0.20.0 and original procedural geometry. No Nintendo assets, external models, or textures.
 
 ## Run
 
@@ -9,7 +9,7 @@ cd starwing # from the parent bevy directory
 cargo run
 ```
 
-The first build downloads and compiles Bevy; expect several minutes. Native builds use Metal (macOS), Vulkan, or DirectX 12.
+`rust-toolchain.toml` selects Rust 1.99.0 (Bevy requires at least 1.97.1) and includes the WebAssembly target. Rustup installs this toolchain automatically without changing your global default. The first build downloads and compiles Bevy; expect several minutes. Native builds use Metal (macOS), Vulkan, or DirectX 12.
 
 ## Neon Sprawl
 
@@ -77,4 +77,4 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 ```
 
-Bevy is pinned to the familiar 0.18 release series instead of chasing the newest API. Useful starting references: [Bevy examples](https://bevy.org/examples/) and the [0.18.1 3D scene example](https://github.com/bevyengine/bevy/blob/v0.18.1/examples/3d/3d_scene.rs).
+Bevy uses the 0.20 release series; `Cargo.lock` records the exact resolved dependencies. Useful starting references: [Bevy examples](https://bevy.org/examples/) and the [0.20.0 3D scene example](https://github.com/bevyengine/bevy/blob/v0.20.0/examples/3d/3d_scene.rs).

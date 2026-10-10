@@ -130,11 +130,11 @@ mod tests {
             assert!(decoded.len() >= 2205);
             let peak = decoded
                 .iter()
-                .map(|&sample| (sample as f32).abs())
+                .map(|sample| sample.abs())
                 .fold(0.0, f32::max);
-            assert!(peak > 100.0 && peak < i16::MAX as f32 * 0.7);
-            assert!((decoded[0] as f32).abs() < 100.0);
-            assert!((*decoded.last().unwrap() as f32).abs() < 100.0);
+            assert!(peak > 100.0 / i16::MAX as f32 && peak < 0.7);
+            assert!(decoded[0].abs() < 100.0 / i16::MAX as f32);
+            assert!(decoded.last().unwrap().abs() < 100.0 / i16::MAX as f32);
         }
     }
 

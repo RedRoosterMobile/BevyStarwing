@@ -8,15 +8,15 @@ ace_fi_-_space_walk.mod
 ## OK steering
 when steering, use an animation not just an immediate tilt
 
-## background and level design
+## OK background and level design
 
 make it look like one of those 80ies synthwave designs, with wireframe landscape mountains on the sides. make use of shaders if you have to(make sure they will be compatible with web builds), make it funky. use neon, sunset, neuromancer vibes.
 
-## explosions
+## OK explosions
 
-when I hit another spaceship, make it explode in a 3d particle effect.
+when I hit another spaceship, make it explode in a more impressive 3d particle effect.
 
-## screenshake
+## OK screenshake
 
 when the player hit something, or gets hit add a camera shake depending on the severity of the hit.
 

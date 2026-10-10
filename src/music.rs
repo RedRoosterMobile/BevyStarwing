@@ -92,7 +92,7 @@ mod tests {
             source
                 .decoder()
                 .take(SAMPLE_RATE as usize * 4)
-                .any(|sample| sample != 0)
+                .any(|sample| sample != 0.0)
         );
         assert!(
             app.world_mut()
