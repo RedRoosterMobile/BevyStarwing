@@ -27,3 +27,23 @@ https://bevy.org/examples/shaders/custom-post-processing/
 ## OK bug
 
 when. closing the app after death I have to force quit/kill it
+
+
+## character
+
+go to blender, build a humanized face/head of an animal (A Panther?). let it have the following expressions (via shape keys or rigging)
+
+- smile
+- celebrate
+- fear/scream/hurt
+- neutral
+- talk
+
+I need those as glbs in my assets folder. no textures. just plain colors.
+
+Later it will be rendered in a monitor with crt lines on top and make it react to what happens in the game.
+
+also give me voice lines that I will record and put in.
+render it in a monitor with crt lines on top and make it react to what happens in the game.
+
+also give me voice lines that I will record and put in.

@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.97.1"
 
 [dependencies]
-bevy = { version = "0.20.0", default-features = false, features = ["default_app", "default_platform", "3d_bevy_render", "ui_bevy_render", "bevy_audio", "wav"] }
+bevy = { version = "0.20.0", default-features = false, features = ["default_app", "default_platform", "3d_bevy_render", "ui_bevy_render", "bevy_gltf", "bevy_audio", "wav"] }
 
 xmrs = { version = "0.15.2", default-features = false, features = ["std", "import_mod"] }
 xmrsplayer = { version = "0.15.0", default-features = false, features = ["std", "import_mod"] }

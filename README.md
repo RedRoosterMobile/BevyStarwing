@@ -1,6 +1,6 @@
 # Starwing
 
-A tiny Star Fox (SNES)-inspired rail shooter, made with Bevy 0.20.0 and original procedural geometry. No Nintendo assets, external models, or textures.
+A tiny Star Fox (SNES)-inspired rail shooter, made with Bevy 0.20.0 and original procedural geometry. No Nintendo assets or textures. Includes an original Blender-built panther comms portrait.
 
 ## Run
 
@@ -45,6 +45,14 @@ Use a modern desktop browser with WebGL2 and a keyboard. Serve over HTTP(S), not
 
 Survive the 90-second canyon run. Shoot red fighters for 100 points each; avoid their aimed shots, floating rocks, and walls with narrow openings. Five shield hits end the run. Damage briefly makes you invulnerable (the ship flashes). Obstacles cannot be destroyed. Chromatic aberration is always visible, with exaggerated color splitting on hits. Hits briefly shake the camera: laser impacts are subtle, shield damage is stronger, and crashes/destruction give the largest jolt. Hit effects fade back to the resting camera and baseline aberration, freeze while paused, and reset on restart; immune hits do not trigger damage feedback. The course gets faster and waves more frequent as you progress.
 
+## Panther comms monitor
+
+A live 3D panther portrait sits in a bottom-left monitor with CRT scanlines and a slow scanning band. Kills and rolls trigger a smile; shield hits trigger hurt/fear, with a stronger caption at two shields or fewer; victory celebrates and defeat holds the hurt pose. Expressions ease back to neutral between events. Damage takes priority over kill feedback. Pause freezes reactions and restart clears them. Talking is disabled.
+
+The model renders to a 256×256 image on an isolated layer, then into the UI; it cannot appear in the flight scene. The render target uses sRGB directly without alternate texture views, and portrait point lights preserve WebGL2's single directional-light budget. Scanlines use ordinary UI strips, with no custom shader. The GLB is embedded for native and web. Controls sit in the bottom right to avoid the monitor.
+
+Record the seven lines listed in [`assets/voice/panther/README.md`](assets/voice/panther/README.md), put the named WAVs in that directory, and rebuild. Optional clips are embedded automatically. Missing clips remain silent; captions still work. Voice playback is rate-limited, pauses with the game, and urgent cues interrupt less important lines. No lip-sync is enabled.
+
 ## Soundtrack
 
 The supplied ProTracker MOD **Space Walk** is preserved at `assets/music/ace_fi_-_space_walk.mod` and embedded in the executable. `xmrs` / `xmrsplayer` import its instruments, patterns, and effects and render one complete pass to stereo PCM in memory at startup. Bevy loops that audio at 25% volume beneath the sound effects. No converter, system tracker library, or pre-rendered audio file is required.
@@ -68,6 +76,7 @@ Gameplay lives in `src/main.rs`:
 - `src/sound.rs`: original [sfxr/jsfxr-style](https://sfxr.me/) procedural sound effects. Pulse waves, pitch slides, filtered noise, and attack/decay envelopes become in-memory mono PCM WAVs at startup. Effects cover player/enemy lasers, explosions, shield hits, rolls, victory, and defeat. Bevy plays each once and removes the audio entity afterward; restart also stops active effects. No downloaded samples or JavaScript runtime are needed.
 
 - `src/music.rs`: MOD rendering, looping soundtrack, and pause/resume.
+- `src/monitor.rs`: render-to-texture panther portrait, CRT overlay, reaction priority, captions, and optional voices. `build.rs` discovers recordings for embedding.
 
 The chained Update systems execute in order. Forward flight is simulated by bringing the world toward a player at Z=0. Shared mesh/material handles keep spawning cheap. This is a small learning prototype, not a faithful recreation: no bosses, Nintendo characters, or textures. Player collisions use simple box/sphere checks; lasers use swept segments so fast shots cannot skip targets. Simulation steps are capped at 50 ms, so the game slows down on very slow machines instead of jumping forward.
 

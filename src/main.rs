@@ -3,6 +3,7 @@ use std::f32::consts::TAU;
 
 mod explosion;
 mod impact;
+mod monitor;
 mod music;
 mod scenery;
 mod sound;
@@ -30,6 +31,7 @@ fn main() {
             close_when_requested: false,
             ..default()
         }))
+        .add_plugins(monitor::MonitorPlugin)
         .insert_resource(ClearColor(Color::srgb(0.018, 0.004, 0.055)))
         .init_resource::<Flight>()
         .add_message::<Sound>()
@@ -233,6 +235,7 @@ fn setup(
         Transform::from_xyz(0.0, 3.0, 12.0).looking_at(Vec3::new(0.0, 0.0, -28.0), Vec3::Y);
     commands.spawn((
         Camera3d::default(),
+        IsDefaultUiCamera,
         camera_pose,
         impact::ImpactCamera::new(camera_pose),
         bevy::post_process::effect_stack::ChromaticAberration {
@@ -263,10 +266,22 @@ fn setup(
             ..default()
         },
     ));
-    commands.spawn((Text::new("WASD / arrows: steer    SPACE: fire    SHIFT: roll\nP: pause    R: restart    ESC: quit"),
-        TextFont { font_size: FontSize::Px(17.0), ..default() }, TextColor(Color::WHITE), Node {
-            position_type: PositionType::Absolute, bottom: px(18), left: px(22), ..default()
-        }));
+    commands.spawn((
+        Text::new(
+            "WASD / arrows: steer   SPACE: fire\nSHIFT: roll   P: pause\nR: restart   ESC: quit",
+        ),
+        TextFont {
+            font_size: FontSize::Px(15.0),
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(18),
+            right: px(22),
+            ..default()
+        },
+    ));
     commands.insert_resource(explosion::setup(&mut meshes, &mut mats));
     commands.insert_resource(art);
 }
